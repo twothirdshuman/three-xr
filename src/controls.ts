@@ -84,7 +84,6 @@ const updateNonXr = (renderer: THREE.WebGLRenderer) => {
         }); 
     }
     const newHead = getHead();
-    console.log(newHead.position);
     
     setRightHand({
         position: newHead.position.clone().add(new THREE.Vector3(0.25, -1, 0)),
@@ -99,10 +98,6 @@ const updateNonXr = (renderer: THREE.WebGLRenderer) => {
 
     
 };
-setInterval(() => {
-    console.log("right", getRightHand().position);
-    console.log("left", getLeftHand().position);
-}, 100);
 export const update = (renderer: THREE.WebGLRenderer) => {
     if (renderer.xr.isPresenting) {
         updateHands(renderer);

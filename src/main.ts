@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import * as XRButton from "three/examples/jsm/webxr/XRButton.js";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import AAAAAAAAA from './networking';
+console.log(AAAAAAAAA);
 import Avatar from "./avatar";
 import World from './world';
-import { GameObject } from './game';
-import { Body, Thing } from './avatarTypes';
-import { createSignal } from './signals';
 import * as controlls from "./controls"
 
 const scene = new THREE.Scene();
