@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import * as XRButton from "three/examples/jsm/webxr/XRButton.js";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import networking from './networking/networking';
+import { setNewEndpoint, registerRemote } from './networking/networking';
 import Avatar from "./avatar";
 import World from './world';
 import * as controlls from "./controls"
-import { createEffect } from './signals';
+import { createEffect, remoteContextRemote } from './signals';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -35,9 +35,11 @@ function animate(time: number) {
 }
 
 const objects = [];
-for (const obj of Avatar(controlls.signals.getters)) {
-    objects.push(obj);
-}
+registerRemote("a", () => {
+    for (const obj of Avatar()) {
+        objects.push(obj);
+    }
+});
 
 for (const obj of World()) {
     objects.push(obj);
@@ -47,10 +49,14 @@ for (const obj of objects) {
     scene.add(obj.mesh);
 }
 
-createEffect(() => {
-    const joined = networking.getJoined();
-
-});
+// This is basically an ID resolver
+setNewEndpoint((id) => {
+    return remoteContextRemote(() => {
+        if (id === "a") {
+            Avatar(); 
+        }
+    });
+})
 
 renderer.setAnimationLoop(animate)
 document.body.appendChild(XRButton.XRButton.createButton(renderer))

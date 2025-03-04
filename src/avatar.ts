@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Getter, Setter, createEffect, createRemoteSignal, createSignal } from './signals';
 import { GameObject, Mesh } from './game';
 import { Body, Thing as ThingLocal } from './avatarTypes';
+import { signals as controlSignals} from "./controls";
 type Thing = {
     position: {
         x: number,
@@ -54,7 +55,7 @@ const head = (getHead: Getter<ThingLocal>): GameObject => {
     return object;
 };
 
-export default (body: Body) => {
+export default () => {
     const thingInitStr = JSON.stringify(thingInit);
     const [leftHand, setLeftHand] = createRemoteSignal<string>(thingInitStr);
     const [rightHand, setRightHand] = createRemoteSignal<string>(thingInitStr);
@@ -79,10 +80,10 @@ export default (body: Body) => {
             setter(JSON.stringify(thing));
         }
     };
-
-    createEffect(applyThing(body.head, setHead));
-    createEffect(applyThing(body.leftHand, leftHand));
-    createEffect(applyThing(body.rightHand, rightHand));
+    
+    createEffect(applyThing(controlSignals.getters.head, setHead));
+    createEffect(applyThing(controlSignals.getters.leftHand, leftHand));
+    createEffect(applyThing(controlSignals.getters.rightHand, rightHand));
 
     const convertToLocal = (getter: Getter<string>): ThingLocal => {
         const parsed: Thing = JSON.parse(getter());

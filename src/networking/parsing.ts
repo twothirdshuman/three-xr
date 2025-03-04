@@ -25,7 +25,7 @@ function parseDataPart(dataPart: unknown): DataPart | undefined {
         try {
             return {
                 type: "New",
-                resource: new URL(dataPart.resource)
+                resource: dataPart.resource
             }
         } catch (_) {
             return undefined;
@@ -65,7 +65,7 @@ function parseDataPart(dataPart: unknown): DataPart | undefined {
         try {
             return {
                 type: "Update",
-                resource: new URL(dataPart.resource),
+                resource: dataPart.resource,
                 updates: updates
             };
         } catch (_) {

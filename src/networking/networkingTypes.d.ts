@@ -1,4 +1,5 @@
 export type Username = string;
+export type ResourceId = string;
 
 export interface Joined {
     type: "Joined",
@@ -7,7 +8,7 @@ export interface Joined {
 
 export interface New {
     type: 'New',
-    resource: URL
+    resource: ResourceId
 }
 
 export type UpdateInner = {
@@ -16,7 +17,7 @@ export type UpdateInner = {
 };
 export type Update = {
     type: "Update",
-    resource: URL,
+    resource: ResourceId,
     updates: UpdateInner[]
 };
 
