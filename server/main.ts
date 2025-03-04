@@ -27,6 +27,7 @@ Deno.serve({
 
     socket.addEventListener("message", (msg) => {
         try {
+            /*
             console.log(typeof msg.data);
             const w = JSON.parse(msg.data);
             if (!Array.isArray(w)) {
@@ -37,6 +38,7 @@ Deno.serve({
             }
             const t = (a: unknown) => typeof a === "number";
             if (t(w[1].x) && t(w[1].y) && t(w[1].z)) {;} else {throw undefined;}
+            */
             sockets.forEach(s => {
                 if (s !== socket) { 
                     s.send(msg.data) 
