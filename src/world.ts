@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GameObject, Mesh } from './game';
 import { Getter } from './signals';
 import { Thing } from './avatarTypes';
+import * as controlls from "./controls"
 
 function clamp(x: number, y: number): number {
     return Math.max(Math.min(x, y), -x);
@@ -74,8 +75,8 @@ const floater = (toTrack: Getter<Thing>) => {
     return GameObject;
 };
 
-export default (toTrack: Getter<Thing>): GameObject[] => {
+export default (): GameObject[] => {
     return [
-        floater(toTrack)
+        floater(controlls.signals.getters.rightHand)
     ];
 };

@@ -1,10 +1,10 @@
 export interface Thing {
-    position: THREE.Vector3,
-    rotation: THREE.Euler,
+    public position: THREE.Vector3,
+    public rotation: THREE.Euler,
 }
 
 export interface Body {
     public head: Getter<Thing>,
-    leftHand: Getter<Thing>,
-    rightHand: Getter<Thing>
+    public leftHand: Getter<Thing>,
+    public rightHand: Getter<Thing>
 };

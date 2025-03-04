@@ -6,6 +6,7 @@ import World from './world';
 import { GameObject } from './game';
 import { Body, Thing } from './avatarTypes';
 import { createSignal } from './signals';
+import * as controlls from "./controls"
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -21,65 +22,25 @@ orbitControls.update();
 const gridHelper = new THREE.GridHelper(200, 200);
 scene.add(gridHelper);
 
-const [getHead, setHead] = createSignal<Thing>({
-    position: new THREE.Vector3(),
-    rotation: new THREE.Euler()
-});
-const [getLeftHand, setLeftHand] = createSignal<Thing>({
-    position: new THREE.Vector3(),
-    rotation: new THREE.Euler()
-});
-const [getRightHand, setRightHand] = createSignal<Thing>({
-    position: new THREE.Vector3(),
-    rotation: new THREE.Euler()
-});
-
-const updateHands = () => {
-    let controller = renderer.xr.getController(0);
-    setLeftHand({
-        position: controller.position,
-        rotation: controller.rotation
-    });
-    controller = renderer.xr.getController(1);
-    setRightHand({
-        position: controller.position,
-        rotation: controller.rotation
-    });
-};
-
-const updateHead = () => {
-    let head = renderer.xr.getCamera();
-    setLeftHand({
-        position: head.position,
-        rotation: head.rotation
-    });
-};
-
 let prevTime = 0;
 function animate(time: number) {
     const delta = time - prevTime;
     prevTime = time;
 
-    if (!renderer.xr.enabled) {
+    if (!renderer.xr.isPresenting) {
         orbitControls.update();
     }
-
-    updateHands();
-    updateHead();
+    controlls.update(renderer)
 
     renderer.render(scene, camera);
 }
 
 const objects = [];
-for (const obj of Avatar({
-    head: getHead,
-    leftHand: getLeftHand,
-    rightHand: getRightHand
-})) {
+for (const obj of Avatar(controlls.signals.getters)) {
     objects.push(obj);
 }
 
-for (const obj of World(getRightHand)) {
+for (const obj of World()) {
     objects.push(obj);
 }
 
