@@ -3,9 +3,10 @@ export type ResourceId = string;
 
 export interface Joined {
     type: "Joined",
-    username: Username
 }
-
+export interface Disconnect {
+    type: "Disconnect"
+}
 export interface New {
     type: 'New',
     resource: ResourceId
@@ -21,7 +22,7 @@ export type Update = {
     updates: UpdateInner[]
 };
 
-export type DataPart = Joined | New | Update;
+export type DataPart = Joined | New | Update | Disconnect;
 export type Message = {
     to: Username | Username[],
     from: Username,

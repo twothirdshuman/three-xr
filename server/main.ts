@@ -48,6 +48,10 @@ Deno.serve({
             console.log(":(");
         }
     });
+
+    socket.addEventListener("close", () => {
+        
+    })
     
     return response;
 })

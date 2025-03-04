@@ -31,7 +31,6 @@ const hand = (getHand: Getter<ThingLocal>, color: number): GameObject => {
     const geometry = new THREE.SphereGeometry(0.02);
     const material = new THREE.MeshBasicMaterial({ color: color });
     const object = Mesh(geometry, material);
-
     createEffect(() => {
         const hand = getHand();
         object.mesh.position.copy(hand.position);
@@ -82,8 +81,8 @@ export default () => {
     };
     
     createEffect(applyThing(controlSignals.getters.head, setHead));
-    createEffect(applyThing(controlSignals.getters.leftHand, leftHand));
-    createEffect(applyThing(controlSignals.getters.rightHand, rightHand));
+    createEffect(applyThing(controlSignals.getters.leftHand, setLeftHand));
+    createEffect(applyThing(controlSignals.getters.rightHand, setRightHand));
 
     const convertToLocal = (getter: Getter<string>): ThingLocal => {
         const parsed: Thing = JSON.parse(getter());

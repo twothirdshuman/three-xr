@@ -10,12 +10,8 @@ function parseDataPart(dataPart: unknown): DataPart | undefined {
         return undefined;
     }
     if (dataPart.type === "Joined") {
-        if (typeof dataPart.username !== "string") {
-            return undefined;
-        }
         return {
-            type: dataPart.type,
-            username: dataPart.username
+            type: dataPart.type
         };
     }
     if (dataPart.type === "New") {

@@ -72,7 +72,7 @@ export function remoteContextControlled(func: () => void): Getter<number | strin
     }
     activeRemoteContext = "controlled";
     func();
-    activeEffect = null;
+    activeRemoteContext = null;
 
     return gettersRemote;
 }
@@ -83,6 +83,6 @@ export function remoteContextRemote(func: () => void): Setter<number | string>[]
     }
     activeRemoteContext = "remote";
     func();
-    activeEffect = null;
+    activeRemoteContext = null;
     return settersRemote;
 }

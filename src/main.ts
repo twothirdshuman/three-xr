@@ -5,7 +5,8 @@ import { setNewEndpoint, registerRemote } from './networking/networking';
 import Avatar from "./avatar";
 import World from './world';
 import * as controlls from "./controls"
-import { createEffect, remoteContextRemote } from './signals';
+import { createEffect, createSignal, remoteContextRemote } from './signals';
+import { GameObject } from './game';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -34,28 +35,50 @@ function animate(time: number) {
     renderer.render(scene, camera);
 }
 
-const objects = [];
-registerRemote("a", () => {
-    for (const obj of Avatar()) {
+const [getObjects, setObjects] = createSignal<GameObject[]>([]);
+(() => {
+    const objects: GameObject[] = [];
+    registerRemote("a", () => {
+        for (const obj of Avatar()) {
+            objects.push(obj);
+        }
+    });
+    
+    for (const obj of World()) {
         objects.push(obj);
     }
+
+    setObjects(objects);
+})();
+
+let oldObjects: GameObject[] = [];
+createEffect(() => {
+    const currentObjects = getObjects();
+    for (const obj of oldObjects) {
+        scene.remove(obj.mesh);
+    }
+    for (const obj of currentObjects) {
+        scene.add(obj.mesh);
+    }
+    oldObjects = currentObjects;
 });
-
-for (const obj of World()) {
-    objects.push(obj);
-}
-
-for (const obj of objects) {
-    scene.add(obj.mesh);
-}
 
 // This is basically an ID resolver
 setNewEndpoint((id) => {
-    return remoteContextRemote(() => {
+    let objects: GameObject[] = [];
+    const setters = remoteContextRemote(() => {
         if (id === "a") {
-            Avatar(); 
+            objects = Avatar();
+            setObjects([...getObjects(), ...objects]);
         }
     });
+    return {
+        setters: setters,
+        unMount: () => {
+            const newObjects = getObjects().filter(obj => !objects.includes(obj));
+            setObjects(newObjects);
+        } 
+    };
 })
 
 renderer.setAnimationLoop(animate)
