@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "module": "ESNext",
-        "allowImportingTsExtensions": true,
-        "strictNullChecks": true,
-        "strictFunctionTypes": true
-    }
-}
