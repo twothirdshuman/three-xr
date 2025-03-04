@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as XRButton from "three/examples/jsm/webxr/XRButton.js";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Avatar from "./avatar";
 import World from './world';
 import { GameObject } from './game';
@@ -13,7 +14,12 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
+const orbitControls = new OrbitControls( camera, renderer.domElement );
 camera.position.z = 2;
+orbitControls.update();
+
+const gridHelper = new THREE.GridHelper(200, 200);
+scene.add(gridHelper);
 
 const [getHead, setHead] = createSignal<Thing>({
     position: new THREE.Vector3(),
@@ -53,6 +59,10 @@ let prevTime = 0;
 function animate(time: number) {
     const delta = time - prevTime;
     prevTime = time;
+
+    if (!renderer.xr.enabled) {
+        orbitControls.update();
+    }
 
     updateHands();
     updateHead();

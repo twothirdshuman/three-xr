@@ -31,9 +31,14 @@ const head = (getHead: Getter<Thing>): GameObject => {
 };
 
 export default (body: Body) => {
+    
+    const left = hand(body.leftHand, 0x00ffff);
+    const right = hand(body.rightHand, 0xffff00);
+    setInterval(() => console.log("left", left.mesh.position), 1000);
+    setInterval(() => console.log("right", right.mesh.position), 1000);
     return [
-        hand(body.leftHand, 0x00ffff),
-        hand(body.rightHand, 0xffff00),
+        right,
+        left,
         head(body.head)
     ];
 }
