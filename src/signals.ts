@@ -41,3 +41,48 @@ export function createEffect(fn: () => void) {
     }
     wrappedEffect();
 }
+
+let activeRemoteContext: "controlled" | "remote" | null = null;
+let settersRemote: Setter<number | string>[] = [];
+let gettersRemote: Getter<number | string>[] = [];
+export function createRemoteSignal<T extends number | string>(initialValue: T): [Getter<T>, Setter<T>] {
+    if (activeRemoteContext === null) {
+        throw new Error("Must be in remote signal context to create remote Signal");
+    }
+
+    const [getValue, setValue] = createSignal<T>(initialValue);
+    let setValueRet = setValue;
+    if (activeRemoteContext === "remote") {
+        settersRemote.push(setValue as Setter<string | number>); // No clue why as is needed
+        setValueRet = (_: T) => {;};
+    }
+    if (activeRemoteContext === "controlled") {
+        gettersRemote.push(getValue as Getter<string | number>); // No clue why as is needed
+    }
+    return [
+        getValue,
+        setValueRet
+    ];
+}
+
+export function remoteContextControlled(func: () => void): Getter<number | string>[] {
+    gettersRemote = [];
+    if (activeRemoteContext !== null) {
+        throw new Error("tried creating remote context in remote context");
+    }
+    activeRemoteContext = "controlled";
+    func();
+    activeEffect = null;
+
+    return gettersRemote;
+}
+export function remoteContextRemote(func: () => void): Setter<number | string>[] {
+    settersRemote = [];
+    if (activeRemoteContext !== null) {
+        throw new Error("tried creating remote context in remote context");
+    }
+    activeRemoteContext = "remote";
+    func();
+    activeEffect = null;
+    return settersRemote;
+}

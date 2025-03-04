@@ -83,8 +83,12 @@ const updateNonXr = (renderer: THREE.WebGLRenderer) => {
             rotation: head.rotation
         }); 
     }
+};
+let isPresenting = false;
+createEffect(() => {
     const newHead = getHead();
-    
+
+    if (isPresenting) { return; } 
     setRightHand({
         position: newHead.position.clone().add(new THREE.Vector3(0.25, -1, 0)),
         rotation: newHead.rotation.clone()
@@ -94,11 +98,9 @@ const updateNonXr = (renderer: THREE.WebGLRenderer) => {
         position: newHead.position.clone().add(new THREE.Vector3(-0.25, -1, 0)),
         rotation: newHead.rotation.clone()
     });
-    
-
-    
-};
+})
 export const update = (renderer: THREE.WebGLRenderer) => {
+    isPresenting = renderer.xr.isPresenting;
     if (renderer.xr.isPresenting) {
         updateHands(renderer);
         updateHead(renderer);

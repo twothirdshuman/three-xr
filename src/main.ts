@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import * as XRButton from "three/examples/jsm/webxr/XRButton.js";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import AAAAAAAAA from './networking';
-console.log(AAAAAAAAA);
+import networking from './networking/networking';
 import Avatar from "./avatar";
 import World from './world';
 import * as controlls from "./controls"
+import { createEffect } from './signals';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -46,6 +46,11 @@ for (const obj of World()) {
 for (const obj of objects) {
     scene.add(obj.mesh);
 }
+
+createEffect(() => {
+    const joined = networking.getJoined();
+
+});
 
 renderer.setAnimationLoop(animate)
 document.body.appendChild(XRButton.XRButton.createButton(renderer))
