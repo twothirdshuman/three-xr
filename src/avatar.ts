@@ -56,9 +56,9 @@ const head = (getHead: Getter<ThingLocal>): GameObject => {
 
 export default () => {
     const thingInitStr = JSON.stringify(thingInit);
-    const [leftHand, setLeftHand] = createRemoteSignal<string>(thingInitStr);
-    const [rightHand, setRightHand] = createRemoteSignal<string>(thingInitStr);
-    const [getHead, setHead] = createRemoteSignal<string>(thingInitStr);
+    const [leftHand, setLeftHand] = createRemoteSignal(thingInitStr);
+    const [rightHand, setRightHand] = createRemoteSignal(thingInitStr);
+    const [getHead, setHead] = createRemoteSignal(thingInitStr);
 
     const applyThing = (getter: Getter<ThingLocal>, setter: Setter<string>) => {
         return () => {

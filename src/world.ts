@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GameObject, Mesh } from './game';
+import { GameObject, GameObjectNoMesh, Mesh } from './game';
 import { Getter } from './signals';
 import { Thing } from './avatarTypes';
 import * as controlls from "./controls"
@@ -75,8 +75,9 @@ const floater = (toTrack: Getter<Thing>) => {
     return GameObject;
 };
 
-export default (): GameObject[] => {
-    return [
-        floater(controlls.signals.getters.rightHand)
-    ];
+export default (): GameObjectNoMesh => {
+    return {
+        mesh: undefined,
+        children: [floater(controlls.signals.getters.rightHand)]
+    };
 };

@@ -14,7 +14,7 @@ export interface New {
 
 export type UpdateInner = {
     signalNr: number,
-    value: number | string
+    value: string
 };
 export type Update = {
     type: "Update",

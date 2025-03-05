@@ -6,7 +6,7 @@ import Avatar from "./avatar";
 import World from './world';
 import * as controlls from "./controls"
 import { createEffect, createSignal, remoteContextRemote } from './signals';
-import { GameObject } from './game';
+import { GameObject, GameObjectAll, GameObjectNoMesh } from './game';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -35,20 +35,20 @@ function animate(time: number) {
     renderer.render(scene, camera);
 }
 
-const [getObjects, setObjects] = createSignal<GameObject[]>([]);
+const [getObjects, setObjects] = createSignal<GameObjectNoMesh>({mesh:undefined,children:[]});
 (() => {
-    const objects: GameObject[] = [];
+    const objects: GameObjectAll[] = [];
     registerRemote("a", () => {
         for (const obj of Avatar()) {
             objects.push(obj);
         }
     });
-    
-    for (const obj of World()) {
-        objects.push(obj);
-    }
 
-    setObjects(objects);
+    
+    const world = World();
+    objects.push(world);
+
+    setObjects({mesh:undefined,children:objects});
 })();
 
 let oldObjects: GameObject[] = [];
@@ -57,6 +57,7 @@ createEffect(() => {
     for (const obj of oldObjects) {
         scene.remove(obj.mesh);
     }
+    // currenlty broken
     for (const obj of currentObjects) {
         scene.add(obj.mesh);
     }
@@ -66,7 +67,7 @@ createEffect(() => {
 // This is basically an ID resolver
 setNewEndpoint((id) => {
     let objects: GameObject[] = [];
-    const setters = remoteContextRemote(() => {
+    const [_, setters] = remoteContextRemote(() => {
         if (id === "a") {
             objects = Avatar();
             setObjects([...getObjects(), ...objects]);

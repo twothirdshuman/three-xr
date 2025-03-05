@@ -40,7 +40,7 @@ function parseDataPart(dataPart: unknown): DataPart | undefined {
                 if (typeof update.signalNr !== "number") {
                     return undefined;
                 }
-                if (typeof update.value !== "number" && typeof update.value !== "string") {
+                if (typeof update.value !== "string") {
                     return undefined;
                 }
                 ret.push({
@@ -82,13 +82,11 @@ export function parseMessage(jsonParsed: unknown): Message | undefined {
         return undefined;
     }
 
-    if (typeof jsonParsed.to !== "string") {
-        if (!Array.isArray(jsonParsed.to)) {
-            return undefined;
-        }
-        if (typeof jsonParsed.to[0] !== "string") {
-            return undefined;
-        }
+    if (!Array.isArray(jsonParsed.to)) {
+        return undefined;
+    }
+    if (typeof jsonParsed.to.map(s => typeof s === "string").reduce((prev, now) => prev && now)) {
+        return undefined;
     }
 
     const dataPart = parseDataPart(jsonParsed.data);

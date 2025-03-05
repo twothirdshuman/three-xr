@@ -43,21 +43,22 @@ export function createEffect(fn: () => void) {
 }
 
 let activeRemoteContext: "controlled" | "remote" | null = null;
-let settersRemote: Setter<number | string>[] = [];
-let gettersRemote: Getter<number | string>[] = [];
-export function createRemoteSignal<T extends number | string>(initialValue: T): [Getter<T>, Setter<T>] {
+let settersRemote: Setter<string>[] = [];
+let gettersRemote: Getter<string>[] = [];
+export function createRemoteSignal(initialValue: string): [Getter<string>, Setter<string>] {
     if (activeRemoteContext === null) {
         throw new Error("Must be in remote signal context to create remote Signal");
     }
 
-    const [getValue, setValue] = createSignal<T>(initialValue);
+    const [getValue, setValue] = createSignal<string>(initialValue);
     let setValueRet = setValue;
+    settersRemote.push(setValue); 
+    gettersRemote.push(getValue); 
     if (activeRemoteContext === "remote") {
-        settersRemote.push(setValue as Setter<string | number>); // No clue why as is needed
-        setValueRet = (_: T) => {;};
+        setValueRet = (_: string) => {;};
     }
     if (activeRemoteContext === "controlled") {
-        gettersRemote.push(getValue as Getter<string | number>); // No clue why as is needed
+      // NADA
     }
     return [
         getValue,
@@ -65,8 +66,9 @@ export function createRemoteSignal<T extends number | string>(initialValue: T): 
     ];
 }
 
-export function remoteContextControlled(func: () => void): Getter<number | string>[] {
+export function remoteContextControlled(func: () => void): [Getter<string>[], Setter<string>[]] {
     gettersRemote = [];
+    settersRemote = [];
     if (activeRemoteContext !== null) {
         throw new Error("tried creating remote context in remote context");
     }
@@ -74,9 +76,10 @@ export function remoteContextControlled(func: () => void): Getter<number | strin
     func();
     activeRemoteContext = null;
 
-    return gettersRemote;
+    return [gettersRemote, settersRemote];
 }
-export function remoteContextRemote(func: () => void): Setter<number | string>[] {
+export function remoteContextRemote(func: () => void): [Getter<string>[], Setter<string>[]] {
+    gettersRemote = [];
     settersRemote = [];
     if (activeRemoteContext !== null) {
         throw new Error("tried creating remote context in remote context");
@@ -84,5 +87,5 @@ export function remoteContextRemote(func: () => void): Setter<number | string>[]
     activeRemoteContext = "remote";
     func();
     activeRemoteContext = null;
-    return settersRemote;
+    return [gettersRemote, settersRemote];
 }

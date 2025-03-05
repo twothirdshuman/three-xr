@@ -57,7 +57,7 @@ socket.addEventListener("open", () => {
 
 type RemoteThingObject = {
     unMount: () => void,
-    setters: Setter<string | number>[]
+    setters: Setter<string>[]
 };
 type Endpoint = (resourceId: ResourceId) => RemoteThingObject;
 let endpointNew: Endpoint = (resourceId) => {return {unMount: () => {;}, setters:[]};};
@@ -182,7 +182,7 @@ setInterval(() => {
     updateQueue = [];
 }, 1000 / 30);
 export function registerRemote(resourceId: ResourceId, func: () => void) {
-    const getters = remoteContextControlled(() => {
+    const [getters, _] = remoteContextControlled(() => {
         func();
     });
 
