@@ -24,7 +24,7 @@ export type Update = {
 
 export type DataPart = Joined | New | Update | Disconnect;
 export type Message = {
-    to: Username | Username[],
+    to: Username[],
     from: Username,
     data: DataPart
 }; 

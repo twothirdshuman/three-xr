@@ -1,6 +1,6 @@
 import { createEffect, createSignal, remoteContextControlled, Setter } from "../signals";
 import { username } from "../username";
-import { Joined, Message, ResourceId, Update, Username, New } from "./networkingTypes";
+import { Joined, Message, ResourceId, Update, Username, New, UpdateInner } from "./networkingTypes";
 import { parseMessage } from "./parsing";
 const avatarResource = new URL(`${window.location.origin}/avatar.ts`);
 const socket = new WebSocket("/ws");
@@ -28,7 +28,7 @@ const announcePresence = () => {
     };
     const msg: Message = {
         from: username,
-        to: "a",
+        to: ["all"],
         data: newl
     }
     socket.send(JSON.stringify(msg));
@@ -112,17 +112,75 @@ socket.addEventListener("message", (msg) => {
     }
 });
 
-let updateQueue: Message[] = [];
+type OneUpdate = {
+    resource: ResourceId,
+    update: UpdateInner
+}
+let updateQueue: OneUpdate[] = [];
+type MessageUpdate = {
+    to: string[],
+    from: string,
+    data: Update
+}
 setInterval(() => {
     if (socket.readyState !== WebSocket.OPEN) {
         return;
     }
-    updateQueue.forEach(msg => {
-        socket.send(JSON.stringify(msg));
+    
+    const insertUpdate = (toInsert: OneUpdate, insertInto: MessageUpdate) => {
+        if (insertInto.data.resource !== toInsert.resource) {
+            throw new Error("Resource not matched when inserting");
+        }
+        const nr = toInsert.update.signalNr;
+
+        let inserted = false;
+        for (let i = 0; i < insertInto.data.updates.length; i++) {
+            if (insertInto.data.updates[i].signalNr === nr) {
+                insertInto.data.updates[i] = toInsert.update;
+                inserted = true;
+                break;
+            }
+        }
+
+        if (!inserted) {
+            insertInto.data.updates.push(toInsert.update);
+        }
+    };
+    let toSend: MessageUpdate[] = [];
+
+    for (const update of updateQueue) {
+        let inserted = false;
+        for (let i = 0; i < toSend.length; i++) {
+            if (toSend[i].data.resource === update.resource) {
+                insertUpdate(update, toSend[i]);
+                inserted = true;
+                break;
+            }
+        }
+        // New data resource
+        if (!inserted) {
+            toSend.push({
+                from: username,
+                to: ["all"],
+                data: {
+                    type: "Update",
+                    resource: update.resource,
+                    updates: [
+                        update.update
+                    ]
+                }
+            });
+        }
+    }
+    
+    toSend.forEach(msg => {
+        const sanity: Message = msg;
+        socket.send(JSON.stringify(sanity));
     });
+    
 
     updateQueue = [];
-}, 1);
+}, 1000 / 30);
 export function registerRemote(resourceId: ResourceId, func: () => void) {
     const getters = remoteContextControlled(() => {
         func();
@@ -131,19 +189,13 @@ export function registerRemote(resourceId: ResourceId, func: () => void) {
     for (let i = 0; i < getters.length; i++) {
         createEffect(() => {
             const value = getters[i]();
-            const messageData: Update = {
-                type: "Update",
+            
+            const message: OneUpdate = {
                 resource: resourceId,
-                updates: [{
+                update: {
                     signalNr: i,
                     value: value
-                }]
-            };
-
-            const message: Message = {
-                from: username,
-                to: ["a"],//getJoined(),
-                data: messageData
+                }
             };
 
             updateQueue.push(message);
