@@ -1,19 +1,21 @@
-interface Point {
-    x: number,
-    y: number,
-    z: number
-}
-type ID = number;
-type Message = [ID, Point];
+import { serveDir } from "jsr:@std/http/file-server";
+import { serveFile } from "jsr:@std/http";
 
 const sockets: WebSocket[] = [];
 Deno.serve({
     port: 8000,
     hostname: "localhost"
-},(req) => {
+},async (req) => {
+    
+
     const url = new URL(req.url);
     if (url.pathname !== "/ws") {
-        return new Response(null, {status:404});
+        if (url.pathname === "/") {
+            return serveFile(req, "../dist/index.html");
+        }
+        return await serveDir(req, {
+            fsRoot: "../dist"
+        });
     }
     if (req.headers.get("upgrade")?.includes("websocket") !== true) {
         return new Response(null, {status:400});
