@@ -4,11 +4,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GameObject, GameObjectGetter, GameObjectNoMesh } from './gameTypes';
 import { createEffect, createSignal, remoteContext, Setter } from '../signals';
 import { Children } from './helpers';
-import { AvatarExport, WorldExport } from './content';
+import { AvatarExport } from './content';
 import { connect, registerRemote } from '../networking/networking';
-import IDResolver from "../content/idResolve";
 import idResolve from '../content/idResolve';
-import { username } from '../username';
 type StartObjects = {
     scene: THREE.Scene,
     renderer: THREE.WebGLRenderer,

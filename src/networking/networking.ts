@@ -1,8 +1,8 @@
 import { createEffect, createSignal, controlledContext, Setter } from "../signals";
 import { username } from "../username";
-import { Joined, Message, ResourceId, Update, Username, UpdateInner, DataPart, Disconnect } from "./networkingTypes";
+import { Joined, Message, ResourceId, Update, UpdateInner, DataPart, Disconnect } from "./networkingTypes";
 import { parseMessage } from "./parsing";
-import { addUser, createUser, getUser, getUsernames, removeUser } from "./users";
+import { addUser, createUser, getUser, getUsernames } from "./users";
 
 const announcePresence = (socket: WebSocket, avatarId: string) => {
     const message: Joined = {
@@ -20,6 +20,8 @@ const announcePresence = (socket: WebSocket, avatarId: string) => {
         from: username,
         data: message
     }));
+
+    forceUpdatePush(socket);
 };
 
 const announceLeave = (socket: WebSocket) => {
@@ -174,10 +176,34 @@ function sendUpdates(socket: WebSocket) {
     updateQueue = [];
 }
 
+let forceUpdatePush: (socket: WebSocket) => void = (_) => {};
 export function registerRemote(resourceId: ResourceId, func: () => void) {
     const [getters, _] = controlledContext(() => {
         func();
     });
+
+    forceUpdatePush = (socket: WebSocket) => {
+        const updates: UpdateInner[] = []; 
+
+        for (let i = 0; i < getters.length; i++) {
+            updates.push({
+                signalNr: i,
+                value: getters[i]()
+            });
+        }
+
+        const msg: Message<Update> = {
+            from: username,
+            to: ["all"],
+            data: {
+                type: "Update",
+                resource: resourceId,
+                updates: updates
+            }
+        };
+
+        socket.send(JSON.stringify(msg));
+    };
 
     for (let i = 0; i < getters.length; i++) {
         createEffect(() => {
