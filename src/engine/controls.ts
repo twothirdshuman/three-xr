@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Thing } from './avatarTypes';
-import { createEffect, createSignal } from './signals';
+import { createEffect, createSignal } from '../signals';
 
 const [getHead, setHead] = createSignal<Thing>({
     position: new THREE.Vector3(),

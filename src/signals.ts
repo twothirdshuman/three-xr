@@ -66,7 +66,7 @@ export function createRemoteSignal(initialValue: string): [Getter<string>, Sette
     ];
 }
 
-export function remoteContextControlled(func: () => void): [Getter<string>[], Setter<string>[]] {
+export function controlledContext(func: () => void): [Getter<string>[], Setter<string>[]] {
     gettersRemote = [];
     settersRemote = [];
     if (activeRemoteContext !== null) {
@@ -78,7 +78,7 @@ export function remoteContextControlled(func: () => void): [Getter<string>[], Se
 
     return [gettersRemote, settersRemote];
 }
-export function remoteContextRemote(func: () => void): [Getter<string>[], Setter<string>[]] {
+export function remoteContext(func: () => void): [Getter<string>[], Setter<string>[]] {
     gettersRemote = [];
     settersRemote = [];
     if (activeRemoteContext !== null) {

@@ -1,8 +1,10 @@
 import * as THREE from 'three';
-import { Getter, Setter, createEffect, createRemoteSignal, createSignal } from './signals';
-import { GameObject, Mesh } from './game';
-import { Body, Thing as ThingLocal } from './avatarTypes';
-import { signals as controlSignals} from "./controls";
+import { Getter, Setter, createEffect, createRemoteSignal, createSignal } from '../signals';
+import { Children, Mesh } from '../engine/helpers';
+import { Body, Thing as ThingLocal } from '../engine/avatarTypes';
+import { signals as controlSignals} from "../engine/controls";
+import { GameObjectMesh } from '../engine/gameTypes';
+import { AvatarExport } from '../engine/content';
 type Thing = {
     position: {
         x: number,
@@ -27,7 +29,7 @@ const thingInit: Thing = {
         order: "XYZ"
     }
 };
-const hand = (getHand: Getter<ThingLocal>, color: number): GameObject => {
+const hand = (getHand: Getter<ThingLocal>, color: number): GameObjectMesh => {
     const geometry = new THREE.SphereGeometry(0.02);
     const material = new THREE.MeshBasicMaterial({ color: color });
     const object = Mesh(geometry, material);
@@ -40,7 +42,7 @@ const hand = (getHand: Getter<ThingLocal>, color: number): GameObject => {
     return object;
 }
 
-const head = (getHead: Getter<ThingLocal>): GameObject => {
+const head = (getHead: Getter<ThingLocal>): GameObjectMesh => {
     const geometry = new THREE.SphereGeometry(0.15);
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const object = Mesh(geometry, material);
@@ -54,7 +56,7 @@ const head = (getHead: Getter<ThingLocal>): GameObject => {
     return object;
 };
 
-export default () => {
+const avatar = () => {
     const thingInitStr = JSON.stringify(thingInit);
     const [leftHand, setLeftHand] = createRemoteSignal(thingInitStr);
     const [rightHand, setRightHand] = createRemoteSignal(thingInitStr);
@@ -92,9 +94,15 @@ export default () => {
         }
     };
 
-    return [
+    return Children([
         hand(() => convertToLocal(leftHand), 0x00ffff),
         hand(() => convertToLocal(rightHand), 0xffff00),
         head(() => convertToLocal(getHead))
-    ];
-}
+    ]);
+};
+
+const toExport: AvatarExport = {
+    avatar: avatar,
+    uniqueName: "DeafaultAvi"
+};
+export default toExport;

@@ -1,8 +1,10 @@
 import * as THREE from 'three';
-import { GameObject, GameObjectNoMesh, Mesh } from './game';
-import { Getter } from './signals';
-import { Thing } from './avatarTypes';
-import * as controlls from "./controls"
+import { Mesh } from '../engine/helpers';
+import { Getter } from '../signals';
+import { Thing } from '../engine/avatarTypes';
+import { GameObjectNoMesh } from '../engine/gameTypes';
+import * as controlls from "../engine/controls"
+import { WorldExport } from '../engine/content';
 
 function clamp(x: number, y: number): number {
     return Math.max(Math.min(x, y), -x);
@@ -75,9 +77,16 @@ const floater = (toTrack: Getter<Thing>) => {
     return GameObject;
 };
 
-export default (): GameObjectNoMesh => {
+const world = (): GameObjectNoMesh => {
     return {
         mesh: undefined,
-        children: [floater(controlls.signals.getters.rightHand)]
+        children: new Set([floater(controlls.signals.getters.rightHand)])
     };
 };
+
+const toExport: WorldExport = {
+    uniqueName: "floaters!!!!",
+    world: world
+};
+
+export default toExport;

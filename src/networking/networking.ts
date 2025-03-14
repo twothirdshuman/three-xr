@@ -1,17 +1,16 @@
-import { createEffect, createSignal, remoteContextControlled, Setter } from "../signals";
+import { createEffect, createSignal, controlledContext, Setter } from "../signals";
 import { username } from "../username";
-import { Joined, Message, ResourceId, Update, Username, New, UpdateInner } from "./networkingTypes";
+import { Joined, Message, ResourceId, Update, Username, UpdateInner, DataPart, Disconnect } from "./networkingTypes";
 import { parseMessage } from "./parsing";
-const avatarResource = new URL(`${window.location.origin}/avatar.ts`);
-const socket = new WebSocket("/ws");
-const [getJoined, setJoined] = createSignal<Username[]>([]);
+import { addUser, createUser, getUser, getUsernames, removeUser } from "./users";
 
-const announcePresence = () => {
+const announcePresence = (socket: WebSocket, avatarId: string) => {
     const message: Joined = {
         type: "Joined",
+        avatarId: avatarId
     };
 
-    const joined = getJoined();
+    const joined = getUsernames();
     let to = joined;
     if (joined.length === 0) {
         to = ["all"];
@@ -21,22 +20,11 @@ const announcePresence = () => {
         from: username,
         data: message
     }));
+};
 
-    const newl: New = {
-        type: "New",
-        resource: "a"
-    };
-    const msg: Message = {
-        from: username,
+const announceLeave = (socket: WebSocket) => {
+    const disconnect: Message<Disconnect> = {
         to: ["all"],
-        data: newl
-    }
-    socket.send(JSON.stringify(msg));
-}
-
-const announceLeave = () => {
-    const disconnect: Message = {
-        to: ["a"],
         from: username,
         data: {
             type: "Disconnect"
@@ -44,32 +32,12 @@ const announceLeave = () => {
     };
 
     socket.send(JSON.stringify(disconnect));
-
-}
-
-window.addEventListener("beforeunload", function(e){
-    announceLeave();
-});
-
-socket.addEventListener("open", () => {
-    announcePresence();
-});
-
-type RemoteThingObject = {
-    unMount: () => void,
-    setters: Setter<string>[]
 };
-type Endpoint = (resourceId: ResourceId) => RemoteThingObject;
-let endpointNew: Endpoint = (resourceId) => {return {unMount: () => {;}, setters:[]};};
-export function setNewEndpoint(endpoint: Endpoint) {
-    endpointNew = endpoint;
-}
 
-const settersMap: Map<ResourceId, RemoteThingObject> = new Map();
-socket.addEventListener("message", (msg) => {
+function intoMessage(msg: MessageEvent<unknown>): Message<DataPart> | undefined {
     let json;
     try {
-        json = JSON.parse(msg.data);
+        json = JSON.parse(msg.data as string);
     } catch (_) {
         return;
     }
@@ -78,39 +46,62 @@ socket.addEventListener("message", (msg) => {
         return;
     }
 
-    if (message.data.type === "Joined") {
-        const joined = getJoined();
-        if (joined.includes(message.from)) {
-            return;
-        }
-        if (!message.to.includes("all")) {
-            return;
-        }
-        setJoined([...joined, message.from]);
+    return message;
+}
 
-        announcePresence();
+function isNew(message: Message<Joined>) {
+    const joined = getUsernames();
+    const ret = joined.includes(message.from);
+
+    return !ret;
+}
+
+function onSomeoneJoin(message: Message<Joined>, announcePresence: () => void) {
+    if (!isNew(message)) {
+        return;
     }
+    
+    const user = createUser(message.from, message.data.avatarId);
+    if (user === undefined) {
+        throw new Error("Could not create avatar");
+    }
+    addUser(user);
 
-    if (message.data.type === "New") {
-        const setters = endpointNew(message.data.resource);
-        console.log("new!!!");
-        settersMap.set(message.data.resource, setters);
+    announcePresence();
+}
+
+function onDisconnect(message: Message<Disconnect>) {
+    const user = getUser(message.from);
+    if (user === undefined) {
+        throw new Error("tried to disconnect on non existant user");
+    }
+    user.unMount();
+}
+
+function onUpdate(message: Message<Update>) {
+    const user = getUser(message.from);
+    if (user === undefined) {
+        throw new Error("tried to update on non existant user");
+    }
+    message.data.updates.forEach(update => user.setters[update.signalNr](update.value));
+}
+
+function onMessage(msg: MessageEvent<unknown>, announcePresence: () => void) {
+    const message = intoMessage(msg);
+    if (message === undefined) {
+        return;
+    }
+    console.log(message.data.type);
+    if (message.data.type === "Joined") {
+        onSomeoneJoin(message as Message<Joined>, announcePresence);
     }
     if (message.data.type === "Disconnect") {
-        const setters = settersMap.get("a"); // TODO fix a not hard coded
-        if (setters === undefined) {
-            throw new Error("tried to disconnect on non existant resource");
-        }
-        setters.unMount();
+        onDisconnect(message as Message<Disconnect>)
     }
     if (message.data.type === "Update") {
-        const setters = settersMap.get(message.data.resource);
-        if (setters === undefined) {
-            throw new Error("tried to update on non existant resource");
-        }
-        message.data.updates.forEach(update => setters.setters[update.signalNr](update.value));
+        onUpdate(message as Message<Update>)
     }
-});
+}
 
 type OneUpdate = {
     resource: ResourceId,
@@ -122,7 +113,8 @@ type MessageUpdate = {
     from: string,
     data: Update
 }
-setInterval(() => {
+
+function sendUpdates(socket: WebSocket) {
     if (socket.readyState !== WebSocket.OPEN) {
         return;
     }
@@ -174,15 +166,16 @@ setInterval(() => {
     }
     
     toSend.forEach(msg => {
-        const sanity: Message = msg;
+        const sanity: Message<DataPart> = msg;
         socket.send(JSON.stringify(sanity));
     });
     
 
     updateQueue = [];
-}, 1000 / 30);
+}
+
 export function registerRemote(resourceId: ResourceId, func: () => void) {
-    const [getters, _] = remoteContextControlled(() => {
+    const [getters, _] = controlledContext(() => {
         func();
     });
 
@@ -203,3 +196,20 @@ export function registerRemote(resourceId: ResourceId, func: () => void) {
     }
 }
 
+export function connect(avatarId: string) {
+    const socket = new WebSocket("/ws");
+
+    window.addEventListener("beforeunload", function(e){
+        announceLeave(socket);
+    });
+    
+    socket.addEventListener("open", () => {
+        announcePresence(socket, avatarId);
+        setInterval(() => {
+            sendUpdates(socket);
+        }, 1000 / 30);
+    });
+    socket.addEventListener("message", msg => {
+        onMessage(msg, () => announcePresence(socket, avatarId));
+    });
+}

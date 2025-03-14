@@ -1,27 +1,21 @@
 import * as THREE from 'three';
 import * as XRButton from "three/examples/jsm/webxr/XRButton.js";
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { setNewEndpoint, registerRemote } from './networking/networking';
-import Avatar from "./avatar";
-import World from './world';
-import * as controlls from "./controls"
-import { createEffect, createSignal, remoteContextRemote } from './signals';
-import { GameObject, GameObjectAll, GameObjectNoMesh } from './game';
-
+import { start } from './engine/sceneRenderer';
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
+document.body.appendChild(XRButton.XRButton.createButton(renderer));
 
-const orbitControls = new OrbitControls( camera, renderer.domElement );
-camera.position.z = 2;
-orbitControls.update();
+start({
+        scene,camera,renderer
+}, "floaters!!!!", {
+    debug: true
+});
 
-const gridHelper = new THREE.GridHelper(200, 200);
-scene.add(gridHelper);
-
+/*
 let prevTime = 0;
 function animate(time: number) {
     const delta = time - prevTime;
@@ -46,41 +40,58 @@ const [getObjects, setObjects] = createSignal<GameObjectNoMesh>({mesh:undefined,
 
     
     const world = World();
-    objects.push(world);
+    objects.push(world.children[0]);
 
     setObjects({mesh:undefined,children:objects});
 })();
 
-let oldObjects: GameObject[] = [];
+const getGameObject = (thing: GameObjectAll): GameObjectAllTypes => {
+    if (typeof thing === "function") {
+        return thing();
+    }
+    return thing;
+};
+
+let oldObjects: GameObjectAll[] = [];
 createEffect(() => {
+
     const currentObjects = getObjects();
     for (const obj of oldObjects) {
-        scene.remove(obj.mesh);
+        const gameObject = getGameObject(obj);
+        if (gameObject.mesh === undefined) {
+            continue;
+        }
+        scene.remove(gameObject.mesh);
     }
     // currenlty broken
-    for (const obj of currentObjects) {
-        scene.add(obj.mesh);
+    for (const obj of currentObjects.children) {
+        const gameObject = getGameObject(obj);
+
+        if (gameObject.mesh === undefined) {
+            continue;
+        }
+        scene.add(gameObject.mesh);
     }
-    oldObjects = currentObjects;
+    oldObjects = currentObjects.children;
 });
 
 // This is basically an ID resolver
 setNewEndpoint((id) => {
-    let objects: GameObject[] = [];
+    let objects: GameObjectAllTypes[] = [];
     const [_, setters] = remoteContextRemote(() => {
         if (id === "a") {
             objects = Avatar();
-            setObjects([...getObjects(), ...objects]);
+            setObjects({mesh:undefined,children:[...getObjects().children, ...objects]});
         }
     });
     return {
         setters: setters,
         unMount: () => {
-            const newObjects = getObjects().filter(obj => !objects.includes(obj));
+            const newObjects = {mesh:undefined,children:getObjects().children.filter(obj => !objects.includes(getGameObject(obj)))};
             setObjects(newObjects);
         } 
     };
 })
 
 renderer.setAnimationLoop(animate)
-document.body.appendChild(XRButton.XRButton.createButton(renderer))
+*/

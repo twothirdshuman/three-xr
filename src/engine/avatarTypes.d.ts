@@ -1,3 +1,6 @@
+import { Getter } from "../signals"
+import * as THREE from 'three';
+
 export interface Thing {
     public position: THREE.Vector3,
     public rotation: THREE.Euler,

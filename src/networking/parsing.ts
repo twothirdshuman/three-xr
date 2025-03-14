@@ -10,22 +10,13 @@ function parseDataPart(dataPart: unknown): DataPart | undefined {
         return undefined;
     }
     if (dataPart.type === "Joined") {
+        if (typeof dataPart.avatarId !== "string") {
+            return undefined;
+        } 
         return {
-            type: dataPart.type
+            type: dataPart.type,
+            avatarId: dataPart.avatarId
         };
-    }
-    if (dataPart.type === "New") {
-        if (typeof dataPart.resource !== "string") {
-            return undefined;
-        }
-        try {
-            return {
-                type: "New",
-                resource: dataPart.resource
-            }
-        } catch (_) {
-            return undefined;
-        }
     }
     if (dataPart.type === "Update") {
         const updates = (() => {
@@ -68,12 +59,15 @@ function parseDataPart(dataPart: unknown): DataPart | undefined {
             return undefined;
         }
     }
-    
-    console.log("WARNING NOT SAFE JSON PARSE");
-    return dataPart as unknown as DataPart;
+    if (dataPart.type === "Disconnect") {
+        return {
+            type: "Disconnect"
+        }
+    }
+    return undefined;
 }
 
-export function parseMessage(jsonParsed: unknown): Message | undefined {
+export function parseMessage(jsonParsed: unknown): Message<DataPart> | undefined {
     if (!isObject(jsonParsed)) {
         return undefined;
     }
@@ -85,7 +79,7 @@ export function parseMessage(jsonParsed: unknown): Message | undefined {
     if (!Array.isArray(jsonParsed.to)) {
         return undefined;
     }
-    if (typeof jsonParsed.to.map(s => typeof s === "string").reduce((prev, now) => prev && now)) {
+    if (!jsonParsed.to.map(s => typeof s === "string").reduce((prev, now) => prev && now)) {
         return undefined;
     }
 
