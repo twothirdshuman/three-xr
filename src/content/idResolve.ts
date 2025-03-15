@@ -1,8 +1,8 @@
 import { AvatarExport, WorldExport } from "../engine/content";
-import avatar from "./avatar";
-import world from "./world";
+import defaultAvi from "./deafultAvi";
+import floater from "./floater";
 
-const exports: (WorldExport | AvatarExport)[] = [avatar, world];
+const exports: (WorldExport | AvatarExport)[] = [defaultAvi, floater];
 export default (id: string): WorldExport | AvatarExport | undefined => {
     return exports.find(ex => ex.uniqueName === id);
 };
