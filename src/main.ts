@@ -11,6 +11,6 @@ document.body.appendChild(XRButton.XRButton.createButton(renderer));
 
 start({
         scene,camera,renderer
-}, "floaters!!!!", {
+}, "dynamicCubes", {
     debug: true
 });
